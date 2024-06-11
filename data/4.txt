@@ -1,0 +1,11 @@
+{
+    
+	"image" : "D:/4.png",
+    
+	"name" : "Owner 4"
+,
+	"addr" : "Property Address 4",
+	"NFT"  : "4cpr1234efgh5678",
+	"transfer": "4kcy3423jkge6285"
+	
+}
