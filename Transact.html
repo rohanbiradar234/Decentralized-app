@@ -1,0 +1,211 @@
+<html>
+    <head>
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.1/jquery.min.js" integrity="sha512-aVKKRRi/Q/YV+4mjoKBsE4x3H+BkegoM/em46NNlCqNTmUYADjBbeNefNxYV7giUp0VxICtqdrbqU7iVaeZNXA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/web3/1.8.1/web3.min.js" integrity="sha512-vtUOC0YIaNm/UutU7yfnwqnF9LOYnXtpHe2kwi1nvJNloeGQuncNBiEKP/3Ww3D62USAhbXGsnYpAYoiDsa+wA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+        <link rel="stylesheet" type="text/css" href="style.css" /> 
+        <link rel="stylesheet" type="text/css" href="master.css">
+    </head>
+    <body>
+
+        <center>
+            <header><h1>Transact/ Transfer the Property</h1></header>
+            <p id="totalNFTs"></p>
+            <div>
+                <label for="textbox">NF Token Id:</label> 
+                <input id="TokenId" placeholder="Enter NFT Id" ondblclick="Display()">
+            </div>
+            <div>
+                <label for="textbox">Owner Name:</label> 
+                <input readonly id="Owner_Name" placeholder="">
+                
+            </div>
+            <div>
+                <label for="textbox">Property Address:</label> 
+                <input readonly id="Prop_Addr" placeholder="">
+            </div>
+            <div>
+                <label for="textbox">Property Image:</label> 
+            </div>
+            <div class="imgdiv">
+                <img height=100 id="nftpng"/>
+                <p id="nftname"></p>
+                <p id="nftowner">New Owner's Wallet Address to be displayed here after successful transfer</p>
+            </div>
+            <div>
+                <label for="textbox">Transfer To:</label> 
+                <input id="toAddress" placeholder="Enter Address - New Owner">
+            </div>
+                        
+            <hr>
+            <div>
+                <button disabled id="Transfer_NFT" class="button" onclick="TransferNFT()">Transfer NFT Disabled</button>
+                
+                
+            </div>
+        </center>
+
+        <script src="contract.js"></script>
+        <script>
+            var accounts;
+            var myContract;
+
+            //DATA IS HARD CODED FOR POC/ PRESENTATION PURPOSE
+            //DATA TO BE READ AND WRITTEN - FROM/TO FLAT FILES/ IPFS etc AFTER PRESENTATION
+            //***********************************************************************************
+            function Display() {
+                var tempId;
+                document.getElementById("Transfer_NFT").textContent = "Transfer NFT";
+                document.getElementById("Transfer_NFT").disabled = false;
+                tempId= document.getElementById("TokenId").value;
+                    document.getElementById("Owner_Name").value="";
+                    document.getElementById("Prop_Addr").value="";
+                    document.getElementById("nftpng").src = "";                    
+                if (tempId ==="1cpr1234efgh5678") {   
+                    document.getElementById("Owner_Name").value="Owner 1";
+                    document.getElementById("Prop_Addr").value="Property Address 1";
+                    document.getElementById("nftpng").src = "Data/1.png";
+                } else if (tempId==="2cpr1234efgh5678") {                     
+                    document.getElementById("Owner_Name").value="Owner 2";
+                    document.getElementById("Prop_Addr").value="Property Address 2";
+                    document.getElementById("nftpng").src = "Data/2.png";
+                } else if (tempId==="3cpr1234efgh5678") {                     
+                    document.getElementById("Owner_Name").value="Owner 3";
+                    document.getElementById("Prop_Addr").value="Property Address 3";
+                    document.getElementById("nftpng").src = "Data/3.png";      
+                } else if (tempId==="4cpr1234efgh5678") {                     
+                    document.getElementById("Owner_Name").value="Owner 4";
+                    document.getElementById("Prop_Addr").value="Property Address 4";
+                    document.getElementById("nftpng").src = "Data/4.png";    
+                } else if (tempId==="5cpr1234efgh5678") {                     
+                    document.getElementById("Owner_Name").value="Owner 5";
+                    document.getElementById("Prop_Addr").value="Property Address 5";
+                    document.getElementById("nftpng").src = "Data/5.png";          
+                } else {                    
+                    alert ("NFT NOT Found")    ;
+                    document.getElementById("Transfer_NFT").textContent = "Transfer NFT Disabled";
+                    document.getElementById("Transfer_NFT").disabled = true;
+                }              
+                      tempId="";
+                }
+
+            async function CheckMetamaskConnection(){
+                if(window.ethereum){
+                    try{
+                        web3 = new Web3(window.ethereum);
+                        accounts = await window.ethereum.request({method:'eth_requestAccounts'})
+                        console.log("Done!")
+                        return true;
+                    }catch(err){
+                        console.log(err)
+                        return false;
+                    }
+                } else {
+                    console.log("Metamask Not Found!")
+                    return false;
+                }
+            }
+
+            $(document).ready(async function () {
+                
+                var IsMetaMask = await CheckMetamaskConnection();
+
+                if(IsMetaMask){
+                    console.log("IsMetaMask = true");
+                    myContract = await new web3.eth.Contract(SmartContractABI, SmartContractAddress);
+                    console.log(myContract);
+                    //totalNFTsMinted();
+                } else {
+                    alert("Metamask not detected!")
+                }
+
+            })
+
+            async function totalNFTsMinted(){
+                await myContract.methods.currentTokenId().call(function(err, res){
+                    if(!err){
+                        console.log(res);
+                        document.getElementById("totalNFTs").innerHTML = "Total NFTs Minted : " + res;
+                    }
+                })
+            }
+
+            async function GetNFT(){
+                var tokenId = document.getElementById("tokenId").value;
+
+                await myContract.methods.tokenURI(tokenId).call(async function(err, res){
+                    if(!err){
+                        console.log(res);
+                        JSONResponse = await httpGet(res);
+                        JSONResponse = JSON.parse(JSONResponse);
+                        console.log(JSONResponse)
+                        document.getElementById("nftpng").src = JSONResponse["image"];
+                        document.getElementById("nftname").innerHTML = "Name : " + JSONResponse["name"];
+                        getNFTOwner(tokenId);
+                    } else{
+                        console.log(err);
+                    }
+                })
+            }
+
+            async function getNFTOwner(_tokenId){
+                await myContract.methods.ownerOf(_tokenId).call(function(err, res){
+                    if(!err){
+                        console.log(res);
+                        document.getElementById("nftowner").innerHTML = "Owner : " + res;
+                    }
+                })
+            }
+
+            async function MintNFT(_tokenId){
+                await myContract.methods.mintNFT().send({from: accounts[0]}, function(err, res){
+                    if(!err){
+                        console.log(res);
+                    }else{
+                        console.log(err);
+                    }
+                    document.getElementById("tokenId").innerHTML = "Minted_NFT_Prop_1"
+                })
+            }
+
+            async function TransferNFT(_tokenId){
+                
+                if (document.getElementById("toAddress").value===""){
+                    alert ("Please enter new owner's wallet address for ownership transfer");
+                } else if (document.getElementById("toAddress").value==="1kcy3423jkge6285" || document.getElementById("toAddress").value==="2kcy3423jkge6285" || document.getElementById("toAddress").value==="3kcy3423jkge6285" || document.getElementById("toAddress").value==="4kcy3423jkge6285" || document.getElementById("toAddress").value==="5kcy3423jkge6285") 
+                    {
+                        alert ("Property Ownership has been successfully transferred");
+                        document.getElementById("Transfer_NFT").textContent = "Transfer NFT Disabled";
+                        document.getElementById("Transfer_NFT").disabled = true;
+                        document.getElementById("nftowner").textContent = "New Owner of Property is - " + document.getElementById("toAddress").value;
+                        
+                    } 
+                else {
+
+                    alert ("Please enter a valid address for ownership transfer");
+                }
+                
+                var toAddress = document.getElementById("toAddress").value;
+                var tokenId = document.getElementById("tokenId").value;
+                await myContract.methods.transferFrom(accounts[0], toAddress, tokenId).send({from: accounts[0]}, function(err, res){
+                    if(!err){
+                        console.log(res);
+                    }else{
+                        console.log(err);
+                    }
+                
+                })
+            }
+
+            function httpGet(theUrl){
+                var xmlHttp = new XMLHttpRequest();
+                xmlHttp.open( "GET", theUrl, false ); // false for synchronous request
+                xmlHttp.send( null );
+                return xmlHttp.responseText;
+            }
+
+        </script>
+    </body>
+
+
+</html>

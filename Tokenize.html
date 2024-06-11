@@ -1,0 +1,239 @@
+<html>
+    <head>
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.1/jquery.min.js" integrity="sha512-aVKKRRi/Q/YV+4mjoKBsE4x3H+BkegoM/em46NNlCqNTmUYADjBbeNefNxYV7giUp0VxICtqdrbqU7iVaeZNXA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/web3/1.8.1/web3.min.js" integrity="sha512-vtUOC0YIaNm/UutU7yfnwqnF9LOYnXtpHe2kwi1nvJNloeGQuncNBiEKP/3Ww3D62USAhbXGsnYpAYoiDsa+wA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.0.0/crypto-js.min.js"></script>
+
+        <link rel="stylesheet" type="text/css" href="style.css" /> 
+        <link rel="stylesheet" type="text/css" href="master.css">
+    </head>
+    <body>
+
+        <center>
+            <header><center><h1>Tokenize Property</h1></center></header>
+            <p id="totalNFTs"></p>
+            <div>
+                <label for="textbox">Prop-Owner Id:</label> 
+                <input type="text" id="Prop_Own_ID" placeholder="Enter Property-Owner Id" ondblclick="Display()">
+            </div>
+            <div>
+                <label for="textbox">Owner Name:</label> 
+                <input readonly id="Owner_Name" name="Owner_Name" placeholder=""> 
+                
+            </div>
+            <div>
+                <label for="textbox">Property Address:</label> 
+                <input readonly id="Prop_Addr" placeholder="">
+            </div>
+            <div>
+                <label for="textbox">Property Image:</label> 
+            </div>
+            <div class="imgdiv">
+                <img height=100 id="nftpng"/>
+                <p id="nftname"></p>
+                <p id="nftowner"></p>
+            </div>
+            <div>
+                <button disabled id="Mint_NFT" class="button" onclick="MintNFT()">Mint NFT Disabled</button>
+            </div>
+            <hr>
+            <div>
+                <button disabled id="Get_NFT" class="button" onclick="GetNFT()">TokenizeDisabled</button>
+                <input readonly id="tokenId" placeholder="NFT Id to be displayed here">
+            </div>
+            
+            <hr>
+            <!--<div>
+                <button class="button" onclick="TransferNFT()">Transfer NFT</button>
+                <input id="toAddress" placeholder="Transfer address">
+                
+            </div>-->
+        </center>
+
+        <script src="contract.js"></script>
+        <script>
+            var accounts;
+            var myContract;
+            //**********************************************************************************
+            //CRYPTO SHA256 USED FOR POC/ PRESENTATION PURPOSE ONLY. TO BE REMOVED AFTER PRESENTATION
+            
+            // Function to generate SHA-256 hash using crypto-js library
+            function generateSHA256Hash(data) {
+                return CryptoJS.SHA256(data).toString();
+            }
+
+            // Example usage
+            //const data = 'Hello, world!';
+            //const sha256Hash = generateSHA256Hash(data);
+            //console.log(sha256Hash); // Output: SHA-256 hash
+            //DATA IS HARD CODED FOR POC/ PRESENTATION PURPOSE.
+            //DATA TO BE READ AND WRITTEN - FROM/TO FLAT FILES/ IPFS AFTER PRESENTATION
+            //***********************************************************************************
+            function Display() {
+                var tempId;
+                document.getElementById("Mint_NFT").textContent = "Mint NFT";
+                document.getElementById("Get_NFT").textContent = "TokenizeDisabled";
+                document.getElementById("Get_NFT").disabled = true;
+                document.getElementById("Mint_NFT").disabled = false;
+                document.getElementById("tokenId").value = "";
+                document.getElementById("tokenId").placeholder ="NFT Id to be displayed here";
+                tempId= document.getElementById("Prop_Own_ID").value;
+                    document.getElementById("Owner_Name").value="";
+                    document.getElementById("Prop_Addr").value="";
+                    document.getElementById("nftpng").src = "";                    
+                if (tempId ==="1") {   
+                    document.getElementById("Owner_Name").value="Owner 1";
+                    document.getElementById("Prop_Addr").value="Property Address 1";
+                    document.getElementById("nftpng").src = "Data/1.png";
+                } else if (tempId==="2") {                     
+                    document.getElementById("Owner_Name").value="Owner 2";
+                    document.getElementById("Prop_Addr").value="Property Address 2";
+                    document.getElementById("nftpng").src = "Data/2.png";
+                } else if (tempId==="3") {                     
+                    document.getElementById("Owner_Name").value="Owner 3";
+                    document.getElementById("Prop_Addr").value="Property Address 3";
+                    document.getElementById("nftpng").src = "Data/3.png";      
+                } else if (tempId==="4") {                     
+                    document.getElementById("Owner_Name").value="Owner 4";
+                    document.getElementById("Prop_Addr").value="Property Address 4";
+                    document.getElementById("nftpng").src = "Data/4.png";    
+                } else if (tempId==="5") {                     
+                    document.getElementById("Owner_Name").value="Owner 5";
+                    document.getElementById("Prop_Addr").value="Property Address 5";
+                    document.getElementById("nftpng").src = "Data/5.png";          
+                } else {                    
+                    alert ("Property-Owner ID NOT Found")    ;
+                    document.getElementById("Mint_NFT").textContent = "Mint NFT Disabled";
+                    document.getElementById("Get_NFT").textContent = "TokenizeDisabled";
+                    document.getElementById("Get_NFT").disabled = true;
+                    document.getElementById("Mint_NFT").disabled = true;
+                }              
+                document.getElementById("tokenId").placeholder = "NFT Id to be displayed here"
+                tempId="";
+                }
+
+            async function CheckMetamaskConnection(){
+                if(window.ethereum){
+                    try{
+                        web3 = new Web3(window.ethereum);
+                        accounts = await window.ethereum.request({method:'eth_requestAccounts'})
+                        console.log("Done!")
+                        return true;
+                    }catch(err){
+                        console.log(err)
+                        return false;
+                    }
+                } else {
+                    console.log("Metamask Not Found!")
+                    return false;
+                }
+            }
+
+            $(document).ready(async function () {
+                
+                var IsMetaMask = await CheckMetamaskConnection();
+                alert (SmartContractAddress);
+                if(IsMetaMask){
+                    console.log("IsMetaMask = true");
+                    myContract = await new web3.eth.Contract(SmartContractABI, SmartContractAddress);
+                    console.log(myContract);
+                    //totalNFTsMinted();
+                    alert("Metamask detected!")
+                } else {
+                    alert("Metamask not detected!")
+                }
+
+            })
+
+            async function totalNFTsMinted(){
+                await myContract.methods.currentTokenId().call(function(err, res){
+                    if(!err){
+                        console.log(res);
+                        document.getElementById("totalNFTs").innerHTML = "Total NFTs Minted : " + res;
+                    }
+                })
+            }
+
+            async function GetNFT(){
+                var tokenId = document.getElementById("tokenId").value;
+                //alert ("We are Linking Property-Owner to the NFT");
+                //COMMENTING AND HARD CODING IS DONE FOR POC/ PRESENTATION PURPOSE.
+                //TO BE EXECUTED WITH IPFS/URI AFTER PRESENTATION
+                /*await myContract.methods.tokenURI(tokenId).call(async function(err, res){
+                    if(!err){
+                        console.log(res);
+                        JSONResponse = await httpGet(res);
+                        JSONResponse = JSON.parse(JSONResponse);
+                        console.log(JSONResponse)
+                        document.getElementById("nftpng").src = JSONResponse["image"];
+                        document.getElementById("nftname").innerHTML = "Name : " + JSONResponse["name"];
+                        getNFTOwner(tokenId);
+                    } else{
+                        console.log(err);
+                    }
+                })*/
+                 //Added for POC
+                document.getElementById("Mint_NFT").disabled = true;
+                document.getElementById("Mint_NFT").textContent = "MintDisabled";
+                //document.getElementById("tokenId").value = "NFT Id: " + document.getElementById("Prop_Own_ID").value + "abcd1234efgh5678";
+                document.getElementById("Get_NFT").textContent = "TokenizeDisabled";
+                document.getElementById("Get_NFT").disabled = true;
+                alert ("The Property-Owner Details sucessfully tokenized and recorded on Blockchain");
+                
+            }
+
+            async function getNFTOwner(_tokenId){
+                await myContract.methods.ownerOf(_tokenId).call(function(err, res){
+                    if(!err){
+                        console.log(res);
+                        document.getElementById("nftowner").innerHTML = "Owner : " + res;
+                    }
+                })
+            }
+
+            async function MintNFT(_tokenId){
+                await myContract.methods.mintNFT().send({from: accounts[0]}, function(err, res){
+                    if(!err){
+                        console.log(res);
+                    }else{
+                        console.log(err);
+                    }
+                    document.getElementById("tokenId").innerHTML = "Minted_NFT_Prop_1";
+                    //Added for POC
+                    document.getElementById("Mint_NFT").disabled = true;
+                    document.getElementById("Mint_NFT").textContent = "MintDisabled";
+                    document.getElementById("tokenId").value = "NFT Id: " + document.getElementById("Prop_Own_ID").value + "cpr1234efgh5678";
+                    document.getElementById("Get_NFT").textContent = "Tokenize";
+                    document.getElementById("Get_NFT").disabled = false;
+                    
+                })
+            }
+
+            async function TransferNFT(_tokenId){
+                var toAddress = document.getElementById("toAddress").value;
+                var tokenId = document.getElementById("tokenId").value;
+                await myContract.methods.transferFrom(accounts[0], toAddress, tokenId).send({from: accounts[0]}, function(err, res){
+                    if(!err){
+                        console.log(res);
+                    }else{
+                        console.log(err);
+                    }
+                })
+            }
+
+            function httpGet(theUrl){
+                var xmlHttp = new XMLHttpRequest();
+                xmlHttp.open( "GET", theUrl, false ); // false for synchronous request
+                xmlHttp.send( null );
+                return xmlHttp.responseText;
+            }
+
+            
+
+
+        </script>
+    </body>
+
+
+</html>
